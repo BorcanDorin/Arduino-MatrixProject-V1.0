@@ -3,17 +3,20 @@
 #include "images.h"
 #include <LiquidCrystal.h>
 
-#define JOY_X A5
-#define JOY_Y A4
+#define JoyX A5
+#define JoyY A4
+#define PinBuzzer1 8
 
-#define MAX_PaletLength 4
-#define MIN_PaletLength 2
-#define MAX_Bounce 12
-#define MAX_Speed 5
-#define Image_Delay 100
-#define Game_Delay 250
-#define Ball_Delay 250
-#define Palet_Delay 50
+#define MaxPaletLength 4
+#define MinPaletLength 2
+#define MaxBounce 12
+#define MaxSpeed 5
+#define ImageDelay 100
+#define GameDelay 250
+#define BallDelay 250
+#define PaletDelay 50
+#define BounceSoundDuration 125
+#define SongLength 8
 
 LedControl board = LedControl(12, 11, 10, 1); // pini buni
 LiquidCrystal screen(2, 3, 4, 5, 6, 7); // schimba pini
@@ -22,13 +25,21 @@ bool gameStart;
 bool twoPlayers;
 bool ballDirectionX;  // false -> direction right & true -> direction left
 bool ballDirectionY;  // false -> direction down & true -> direction up
+bool playNote;
+bool playSong;
+
 int speedIndex;
 int paletLength;
 int gamePlayers;
 int countBounce;
+
 unsigned long previousGameTime;
 unsigned long previousBallTime;
 unsigned long previousPaletTime;
+unsigned long previousNoteTime;
+unsigned long previousImageTime;
+unsigned long previousSongNoteTime;
+unsigned long songPause;
 unsigned long currentTime;
 
 int ballX;
@@ -36,15 +47,17 @@ int ballY;
 int player1PaletY; //left
 int player2PaletY; //right
 int score;
+int currentNote;
+int currentImage = 0;
 
 char introMessage[] = {"Welcome to   \n     PONG "};//verify messages 
 
-void playNote(int note){
-  int noteDuration = 1000 / 8;
-  tone(8,  note, noteDuration);
-  int pauseBetweenNotes = noteDuration * 1.30;
-  delay(pauseBetweenNotes);
-  noTone(8);
+void playSound(int note){
+  playNote = true;
+  previousNoteTime = currentTime;
+  noTone(PinBuzzer1);
+  tone(PinBuzzer1,  note, BounceSoundDuration);
+  //
 }
 
 int melody[] = {
@@ -55,21 +68,23 @@ int noteDurations[] = {
   4, 8, 8, 4, 4, 4, 4, 4
 };
 
-void playSong() {
-  for (int thisNote = 0; thisNote < 8; thisNote++) {
-    int noteDuration = 1000 / noteDurations[thisNote];
-    tone(8, melody[thisNote], noteDuration);
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    noTone(8);
-  }
+void song() {
+  playSong = true;
+  previousSongNoteTime = currentTime;
+  int noteDuration = 1000 / noteDurations[currentNote];
+  noTone(PinBuzzer1);
+  tone(PinBuzzer1, melody[currentNote], noteDuration);
+  songPause = noteDuration * 1.30;
+  currentNote++;
 }
 
 void getUserImput(){
   twoPlayers = false;
 }
 
-void displayImage(const byte* image){
+void displayImage(){
+  previousImageTime = currentTime;
+  const byte* image = IMAGES[currentImage++];
   for (int i = 0; i < 8; i++)
     for (int j = 0; j < 8; j++)
       board.setLed(0, i, j, bitRead(image[i], 7 - j)); 
@@ -78,9 +93,11 @@ void displayImage(const byte* image){
 void gameStartUp(){
   score = 0;
   speedIndex = 0;
-  paletLength = MAX_PaletLength;
+  paletLength = MaxPaletLength;
   player1PaletY = 2;
   player2PaletY = 2;
+  currentNote = 0;
+  currentImage = 0;
   
   randomSeed(analogRead(0));
   ballX = random(1, 6);
@@ -88,6 +105,7 @@ void gameStartUp(){
   ballY = random(1, 6);
   countBounce = 0;
   
+  playNote = false;
   ballDirectionX = false;
   if (ballX > 3)
     ballDirectionX = true;
@@ -98,6 +116,7 @@ void gameStartUp(){
   
   draw();
   gameStart = true;
+  playSong = false;
   previousGameTime = millis();
   previousBallTime = previousGameTime;
   previousPaletTime = previousGameTime;
@@ -119,6 +138,8 @@ void draw(){
 
 void gameOver(){
   gameStart = false;
+  song();
+  /*
   for (int thisNote = 0; thisNote < 8; thisNote++) {
     int noteDuration = 1000 / noteDurations[thisNote];
     tone(8, melody[thisNote], noteDuration);
@@ -129,11 +150,13 @@ void gameOver(){
     draw();
     delay(pauseBetweenNotes / 2);
     noTone(8);
-  }
+  }*/
+
+  /*
   for (int i = 0; i < IMAGES_LEN; i++){
     displayImage(IMAGES[i]);
-    delay(Image_Delay);
-  }
+    delay(ImageDelay);
+  }*/
 }
 
 void setup(){
@@ -146,39 +169,42 @@ void setup(){
   getUserImput();
   gameStartUp();
 }
+
 void ballMove(){
   if (ballDirectionX)
-      ballX--;
-    else
-      ballX++;
-    if (ballDirectionY)
-      ballY--;
-    else
-      ballY++;
+    ballX--;
+  else
+    ballX++;
 
-      if (ballX == 1){
-      if (ballY < player1PaletY || ballY > player1PaletY + paletLength)
-        gameOver();
-      else{
-        playNote(NOTE_E3);
-        ballDirectionX = !ballDirectionX;
-        countBounce++;
-      }
+  if (ballDirectionY)
+    ballY--;
+  else
+    ballY++;
+  if (!twoPlayers){
+    player2PaletY = ballY;
+    if (player2PaletY > 8 - paletLength)
+    player2PaletY = 8 - paletLength;
+  }
+  if (ballX == 1){
+    if (ballY < player1PaletY || ballY > player1PaletY + paletLength)
+      gameOver();
+    else{
+      playSound(NOTE_E3);
+      ballDirectionX = !ballDirectionX;
+      countBounce++;
     }
-    if (ballX == 6){
-      if (ballY < player2PaletY || ballY > player2PaletY + paletLength)
-        gameOver();
-      else{
-        playNote(NOTE_C5);
-        ballDirectionX = !ballDirectionX;
-        countBounce++;
-      }
+  }
+  if (ballX == 6){
+    if (ballY < player2PaletY || ballY > player2PaletY + paletLength)
+      gameOver();
+    else{
+      playSound(NOTE_C5);
+      ballDirectionX = !ballDirectionX;
+      countBounce++;
     }
-    if(ballY == 0 || ballY == 7)
-      ballDirectionY = !ballDirectionY;
-
-    if (!twoPlayers)
-      player2PaletY = ballY;
+  }
+  if(ballY == 0 || ballY == 7)
+    ballDirectionY = !ballDirectionY;
 }
 
 void validateGame(){
@@ -186,58 +212,74 @@ void validateGame(){
 }
 
 void paletMove(){
-  int pl1Y = analogRead(JOY_Y);
+  int pl1Y = analogRead(JoyY);
     //if (pl1Y < 100)
     //  player1PaletY--;
-    if (pl1Y < 400)
-      player1PaletY--;
-    if (pl1Y > 600)
-      player1PaletY++;
+  if (pl1Y < 400)
+    player1PaletY--;
+  if (pl1Y > 600)
+    player1PaletY++;
     //if (pl1Y > 900)
     //  player1PaletY++;
-    if (player1PaletY > 8 - paletLength)
-      player1PaletY = 8 - paletLength;
-    if (player1PaletY < 0)
-      player1PaletY = 0;
+  if (player1PaletY > 8 - paletLength)
+    player1PaletY = 8 - paletLength;
+  if (player1PaletY < 0)
+    player1PaletY = 0;
 
       //get player 2 palet location
-    if (!twoPlayers){
-      score++;
-      player2PaletY = ballY;
-      if (player2PaletY > 8 - paletLength)
-      player2PaletY = 8 - paletLength;
-    }
+  if (!twoPlayers){
+    score++;
+    //player2PaletY = ballY;
+    //if (player2PaletY > 8 - paletLength)
+    //player2PaletY = 8 - paletLength;
+  }
 }
 
 void dificulty(){
-  if (countBounce == MAX_Bounce){
-      countBounce = 0;
-      if (speedIndex < MAX_Speed)
-        speedIndex++;
-      if (paletLength > MIN_PaletLength) 
-        paletLength--;
-    }
+  if (countBounce == MaxBounce){
+    countBounce = 0;
+    if (speedIndex < MaxSpeed)
+      speedIndex++;
+    if (paletLength > MinPaletLength) 
+      paletLength--;
+  }
 }
 void gameControls(){
-  //if (currentTime - Previous)
+  if (currentTime - previousBallTime > BallDelay - speedIndex * 25){
+    ballMove();
+    previousBallTime = currentTime;
     draw();
+  }
+  if (currentTime - previousPaletTime > PaletDelay){
+    paletMove();
+    previousPaletTime = currentTime;
+    draw();
+  }
+}
+
+void sounds(){
+  if (playNote)
+    if (currentTime - previousNoteTime > BounceSoundDuration){
+      playNote = false;
+      noTone(PinBuzzer1);
+    }
+  if (playSong)
+    if (currentTime - previousSongNoteTime > songPause){
+      if (currentNote == SongLength){
+        playSong = false;
+        currentNote = 0;
+        noTone(PinBuzzer1);
+      }
+      else
+        song();
+    }
 }
 void loop(){
-  if (gameStart){
-    currentTime = millis();
-    if (currentTime - previousBallTime > Ball_Delay - speedIndex * 25){
-      ballMove();
-      previousBallTime = currentTime;
-      //delay(250 - speedIndex * 25);
-      draw();
-    }
-    if (currentTime - previousPaletTime > Palet_Delay){
-      paletMove();
-      previousPaletTime = currentTime;
-      //delay(250 - speedIndex * 25);
-      draw();
-    }
-    
-  }
-  
+  currentTime = millis();
+  if (gameStart)
+    gameControls();
+  if (!gameStart && currentImage != IMAGES_LEN)
+    if (currentTime - previousImageTime > ImageDelay)
+      displayImage();
+  sounds();
 }
