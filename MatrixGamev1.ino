@@ -1,7 +1,7 @@
 #include "LedControl.h"
 #include "pitches.h"
 #include "images.h"
-#include "LiquidCrystal.h"
+#include <LiquidCrystal.h>
 
 #define JOY_X A5
 #define JOY_Y A4
@@ -12,6 +12,8 @@
 #define MAX_Speed 5
 #define Image_Delay 100
 #define Game_Delay 250
+#define Ball_Delay 250
+#define Palet_Delay 50
 
 LedControl board = LedControl(12, 11, 10, 1); // pini buni
 LiquidCrystal screen(2, 3, 4, 5, 6, 7); // schimba pini
@@ -24,7 +26,9 @@ int speedIndex;
 int paletLength;
 int gamePlayers;
 int countBounce;
-unsigned long previousTime;
+unsigned long previousGameTime;
+unsigned long previousBallTime;
+unsigned long previousPaletTime;
 unsigned long currentTime;
 
 int ballX;
@@ -94,7 +98,10 @@ void gameStartUp(){
   
   draw();
   gameStart = true;
-  previousTime = millis();
+  previousGameTime = millis();
+  previousBallTime = previousGameTime;
+  previousPaletTime = previousGameTime;
+  
 }
 
 void drawPalets(){
@@ -139,9 +146,8 @@ void setup(){
   getUserImput();
   gameStartUp();
 }
-void gameControls(){
-      //get ball new position
-    if (ballDirectionX)
+void ballMove(){
+  if (ballDirectionX)
       ballX--;
     else
       ballX++;
@@ -149,9 +155,38 @@ void gameControls(){
       ballY--;
     else
       ballY++;
-      
-      //get player 1 palet location
-    int pl1Y = analogRead(JOY_Y);
+
+      if (ballX == 1){
+      if (ballY < player1PaletY || ballY > player1PaletY + paletLength)
+        gameOver();
+      else{
+        playNote(NOTE_E3);
+        ballDirectionX = !ballDirectionX;
+        countBounce++;
+      }
+    }
+    if (ballX == 6){
+      if (ballY < player2PaletY || ballY > player2PaletY + paletLength)
+        gameOver();
+      else{
+        playNote(NOTE_C5);
+        ballDirectionX = !ballDirectionX;
+        countBounce++;
+      }
+    }
+    if(ballY == 0 || ballY == 7)
+      ballDirectionY = !ballDirectionY;
+
+    if (!twoPlayers)
+      player2PaletY = ballY;
+}
+
+void validateGame(){
+  
+}
+
+void paletMove(){
+  int pl1Y = analogRead(JOY_Y);
     //if (pl1Y < 100)
     //  player1PaletY--;
     if (pl1Y < 400)
@@ -172,48 +207,37 @@ void gameControls(){
       if (player2PaletY > 8 - paletLength)
       player2PaletY = 8 - paletLength;
     }
-    
-      //check end game and bounce
-    if (ballX == 1){
-      if (ballY < player1PaletY || ballY > player1PaletY + paletLength)
-        gameOver();
-      else{
-        playNote(NOTE_E3);
-        ballDirectionX = !ballDirectionX;
-        countBounce++;
-      }
-    }
-    if (ballX == 6){
-      if (ballY < player2PaletY || ballY > player2PaletY + paletLength)
-        gameOver();
-      else{
-        playNote(NOTE_C5);
-        ballDirectionX = !ballDirectionX;
-        countBounce++;
-      }
-    }
-    if(ballY == 0 || ballY == 7)
-      ballDirectionY = !ballDirectionY;
-        
-    if (countBounce == MAX_Bounce){
+}
+
+void dificulty(){
+  if (countBounce == MAX_Bounce){
       countBounce = 0;
       if (speedIndex < MAX_Speed)
         speedIndex++;
       if (paletLength > MIN_PaletLength) 
         paletLength--;
     }
-
-      //
+}
+void gameControls(){
+  //if (currentTime - Previous)
     draw();
 }
 void loop(){
   if (gameStart){
     currentTime = millis();
-    if (currentTime - previousTime > Game_Delay - speedIndex * 25){
-      gameControls();
-      previousTime = currentTime;
+    if (currentTime - previousBallTime > Ball_Delay - speedIndex * 25){
+      ballMove();
+      previousBallTime = currentTime;
       //delay(250 - speedIndex * 25);
+      draw();
     }
+    if (currentTime - previousPaletTime > Palet_Delay){
+      paletMove();
+      previousPaletTime = currentTime;
+      //delay(250 - speedIndex * 25);
+      draw();
+    }
+    
   }
   
 }
