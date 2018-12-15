@@ -9,8 +9,6 @@
 #define Joy1Y A4
 #define Joy2X A3
 #define Joy2Y A2
-#define Trig 6
-#define Echo 7
 #define PinBuzzer1 12
 
 #define BoardWidth 8
@@ -32,7 +30,7 @@
 #define DistanceLimit 8
 
 LedControl board = LedControl(8, 11, 10, 1); // pini buni
-LiquidCrystal screen(2, 3, 4, 5, 6, 7); // schimba pini
+LiquidCrystal screen(2, 3, 4, 5, 6, 7); // pini buni
 
 bool gameStart;
 bool twoPlayers;
@@ -62,12 +60,15 @@ int ballX;
 int ballY;
 int player1PaletY; //left
 int player2PaletY; //right
-int score;
+int scoreCount;
 int currentNote;
 int currentImage = 0;
 float distance;
 
 char introMessage[] = {"Welcome to   \n     PONG "};//verify messages 
+char player1Win[] = {"Player 1 wins!! (^_^)"};
+char player2Win[] = {"Player 2 wins!! (^_^)"};
+
 
 int melody[] = {
   NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
@@ -187,6 +188,10 @@ void ballMove(){
     ballDirectionY = !ballDirectionY;
 }
 
+void score(){
+  scoreCount++;
+}
+
 void paletMove(){
   //player one palet move 
   int pl1Y = analogRead(Joy1Y);
@@ -199,9 +204,9 @@ void paletMove(){
   if (player1PaletY < 0)
     player1PaletY = 0;
 
-      //player two palet move
+  //player two palet move
   if (!twoPlayers)
-    score++;
+    score();
   else {
     int pl2Y = analogRead(Joy2Y);
     if (pl2Y < 400)
@@ -222,7 +227,7 @@ void getUserImput(){
 }
 
 void gameStartUp(){
-  score = 0;
+  scoreCount = 0;
   speedIndex = 0;
   paletLength = MaxPaletLength;
   player1PaletY = (BoardHeight - paletLength) / 2;
@@ -239,11 +244,11 @@ void gameStartUp(){
   
   playNote = false;
   ballDirectionX = false;
-  if (ballX > 3)
+  if (ballX > (BoardWidth - 1) / 2)
     ballDirectionX = true;
     
   ballDirectionY = false;
-  if (ballY > 3)
+  if (ballY > (BoardWidth - 1) / 2)
     ballDirectionY = true;
   
   draw();
@@ -263,7 +268,17 @@ void gameOver(){
 }
 
 void displayGameStats(){
-  
+  if(twoPlayers){
+    screen.clear();
+    if (ballX < (BoardWidth - 1) / 2){
+      screen.setCursor(1, 0);  
+      screen.print(player2Win);
+    }
+    else{
+      screen.setCursor(1, 0);  
+      screen.print(player1Win);
+    }
+  }
 }
 
 void dificulty(){
@@ -295,14 +310,11 @@ void gameControls(){
 
 void setup(){
   gameStart = false;
-  
-  pinMode(Trig, OUTPUT);
-  pinMode(Echo, INPUT);
-  Serial.begin(9600);
-  screen.begin(16, 2);
+  screen.begin(16, 1);
+  screen.clear();
   for(int i = 0; i < BoardHeight / MatrixSize; i++){
     board.shutdown(i, false);
-    board.setIntensity(i, 2);
+    board.setIntensity(i, 5);
     board.clearDisplay(i);
   }
   getUserImput();
@@ -311,7 +323,6 @@ void setup(){
 
 void loop(){
   currentTime = millis();
-  //currentMicrosTime = micros();
   if (gameStart)
     gameControls();
   if (!gameStart && currentImage != IMAGES_LEN)
