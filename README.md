@@ -11,8 +11,8 @@
   - 16x2 LCD Display;
   - active buzzer;
   - 2 x Joystick;
-  - condensator 0.1 uF (100 nF);
-  - condensator 10 uF;
+  - condenser 0.1 uF (100 nF);
+  - condenser 10 uF;
   - 2 x Breadboard;
   - 100 Ohm resistor;
   - 220 Ohm resistor;
@@ -38,7 +38,7 @@ In two player mode, your goal is to outlast you opponent. Challenge you friends 
 -	The pallets move with the joystick on one direction (up/down).
 -	During the game the boll’s speed increases and the pallets length decreases. 
 
--	Game score is only available in one player mode. The score increases whenever the ball bounces on the oponents pallet.
+-	Game score is only available in one player mode. The score increases whenever the ball bounces on the opponent's pallet.
 
 ### End of game:
 
