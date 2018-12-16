@@ -13,7 +13,6 @@
 #define ScreenBackLight 13
 #define PinBuzzer1 12
 
-#define Adress 0
 #define BoardWidth 8
 #define BoardHeight 8
 #define MatrixSize 8
@@ -68,7 +67,7 @@ int currentNote;
 int currentImage = 0;
 
 char introMessage1[] = {"Welcome to  "};
-char introMessage2[] = {"        PONG "};
+char introMessage2[] = {"          PONG "};
 char player1Win[] = {"Player 1 wins!!"};
 char player2Win[] = {"Player 2 wins!!"};
 char happy[] = {"^_^"};
@@ -77,7 +76,7 @@ char scoreString[] = {"Your score: "};
 char highScoreString[] = {"HighScore: "};
 char newHighScore[] = {"NEW HIGHSCORE!!"};
 char menuCursor[] = {">"};
-char startGame[] = {"Play game ->"};
+char startGame[] = {"Play game"};
 char playersOne[] = {"Players: 1"};
 char playersTwo[] = {"Players: 2"};
 
@@ -231,15 +230,9 @@ void paletMove(){
       player2PaletY = BoardHeight - paletLength;
     if (player2PaletY < 0)
       player2PaletY = 0;
-    
   }
 }
 #pragma endregion
-
-void getUserImput(){
-  
-  twoPlayers = true;
-}
 
 void gameStartUp(){
   scoreCount = 0;
@@ -364,7 +357,6 @@ void menu(){
       screen.setCursor(0, 0);
       screen.print(menuCursor);
     }
-    
     screen.setCursor(1, 0);
     screen.print(startGame);
     if (!menuPosition){
@@ -421,6 +413,4 @@ void loop(){
       menuDisplay = !menuDisplay;
   }
   sounds();
-  
-  
 }
