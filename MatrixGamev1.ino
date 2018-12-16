@@ -9,8 +9,11 @@
 #define Joy1Y A4
 #define Joy2X A3
 #define Joy2Y A2
+#define ScreenPWN 9
+#define ScreenBackLight 13
 #define PinBuzzer1 12
 
+#define Adress 0
 #define BoardWidth 8
 #define BoardHeight 8
 #define MatrixSize 8
@@ -25,9 +28,7 @@
 #define PaletDelay 100
 #define BounceSoundDuration 125
 #define SongLength 8
-#define DistanceDelayLow 2
-#define DistanceDelayHigh 5
-#define DistanceLimit 8
+#define MenuDelay 250
 
 LedControl board = LedControl(8, 11, 10, 1); // pini buni
 LiquidCrystal screen(2, 3, 4, 5, 6, 7); // pini buni
@@ -38,12 +39,15 @@ bool ballDirectionX;  // false -> direction right & true -> direction left
 bool ballDirectionY;  // false -> direction down & true -> direction up
 bool playNote;
 bool playSong;
-bool stepDistance;
+bool stats;
+bool menuDisplay;
+bool menuPosition;
 
 int speedIndex;
 int paletLength;
 int gamePlayers;
 int countBounce;
+int highScore;
 
 unsigned long previousGameTime;
 unsigned long previousBallTime;
@@ -52,8 +56,7 @@ unsigned long previousNoteTime;
 unsigned long previousImageTime;
 unsigned long previousSongNoteTime;
 unsigned long songPause;
-unsigned long previousDistanceTime;
-unsigned long currentMicrosTime;
+unsigned long previousMenuTime;
 unsigned long currentTime;
 
 int ballX;
@@ -63,12 +66,20 @@ int player2PaletY; //right
 int scoreCount;
 int currentNote;
 int currentImage = 0;
-float distance;
 
-char introMessage[] = {"Welcome to   \n     PONG "};//verify messages 
-char player1Win[] = {"Player 1 wins!! (^_^)"};
-char player2Win[] = {"Player 2 wins!! (^_^)"};
-
+char introMessage1[] = {"Welcome to  "};
+char introMessage2[] = {"        PONG "};
+char player1Win[] = {"Player 1 wins!!"};
+char player2Win[] = {"Player 2 wins!!"};
+char happy[] = {"^_^"};
+char connector[] = {" - "};
+char scoreString[] = {"Your score: "};
+char highScoreString[] = {"HighScore: "};
+char newHighScore[] = {"NEW HIGHSCORE!!"};
+char menuCursor[] = {">"};
+char startGame[] = {"Play game ->"};
+char playersOne[] = {"Players: 1"};
+char playersTwo[] = {"Players: 2"};
 
 int melody[] = {
   NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
@@ -180,6 +191,7 @@ void ballMove(){
       gameOver();
     else{
       playSound(NOTE_C5);
+      score();
       ballDirectionX = !ballDirectionX;
       countBounce++;
     }
@@ -190,6 +202,10 @@ void ballMove(){
 
 void score(){
   scoreCount++;
+  screen.clear();
+  screen.setCursor(0, 0);
+  screen.print(scoreString);
+  screen.print(scoreCount);
 }
 
 void paletMove(){
@@ -205,9 +221,7 @@ void paletMove(){
     player1PaletY = 0;
 
   //player two palet move
-  if (!twoPlayers)
-    score();
-  else {
+  if (twoPlayers){
     int pl2Y = analogRead(Joy2Y);
     if (pl2Y < 400)
       player2PaletY--;
@@ -223,6 +237,7 @@ void paletMove(){
 #pragma endregion
 
 void getUserImput(){
+  
   twoPlayers = true;
 }
 
@@ -234,7 +249,6 @@ void gameStartUp(){
   player2PaletY = (BoardHeight - paletLength) / 2;
   currentNote = 0;
   currentImage = 0;
-  distance = 0;
   
   randomSeed(analogRead(0));
   ballX = random(1, BoardWidth - 2);
@@ -252,13 +266,12 @@ void gameStartUp(){
     ballDirectionY = true;
   
   draw();
+  stats = false;
   gameStart = true;
   playSong = false;
-  stepDistance = true;
   previousGameTime = millis();
   previousBallTime = previousGameTime;
   previousPaletTime = previousGameTime;
-  previousDistanceTime = previousGameTime;
 }
 
 void gameOver(){
@@ -268,15 +281,34 @@ void gameOver(){
 }
 
 void displayGameStats(){
-  if(twoPlayers){
+  if (!stats){
+    stats = true;
     screen.clear();
-    if (ballX < (BoardWidth - 1) / 2){
-      screen.setCursor(1, 0);  
-      screen.print(player2Win);
+    screen.setCursor(0, 0); 
+    if(twoPlayers){
+      if (ballX < (BoardWidth - 1) / 2) 
+        screen.print(player2Win);
+      else
+        screen.print(player1Win);
     }
     else{
-      screen.setCursor(1, 0);  
-      screen.print(player1Win);
+      if (scoreCount > highScore){
+        highScore = scoreCount;
+        screen.print(newHighScore);
+        screen.setCursor(0, 1);
+        screen.print(happy); 
+        screen.print(connector);
+        screen.print(scoreCount);
+        screen.print(connector);  
+        screen.print(happy); 
+      }
+      else{
+        screen.print(highScoreString);
+        screen.print(highScore);
+        screen.setCursor(0, 1);
+        screen.print(scoreString);
+        screen.print(scoreCount);
+      }
     }
   }
 }
@@ -308,25 +340,87 @@ void gameControls(){
 
 #pragma endregion
 
+void menu(){
+  if (currentTime - previousMenuTime > MenuDelay){
+    int valY = analogRead(Joy1Y);
+    if (valY > 600 || valY < 400){
+      menuPosition = !menuPosition;
+      playSound(NOTE_CS7);
+    }
+    int valX = analogRead(Joy1X);
+    if (valX > 600 || valX < 400){
+        if (menuPosition){
+          menuDisplay = !menuDisplay;
+          gameStartUp();
+        }
+        else{
+          playSound(NOTE_CS8);
+          twoPlayers = !twoPlayers;
+        }
+    }
+    //display menu items
+    screen.clear();
+    if (menuPosition){
+      screen.setCursor(0, 0);
+      screen.print(menuCursor);
+    }
+    
+    screen.setCursor(1, 0);
+    screen.print(startGame);
+    if (!menuPosition){
+      screen.setCursor(0, 1);
+      screen.print(menuCursor);
+    }
+    screen.setCursor(1, 1);
+    if (!twoPlayers)
+      screen.print(playersOne);
+    else
+      screen.print(playersTwo);
+    previousMenuTime = currentTime;
+  }
+}
+
 void setup(){
   gameStart = false;
-  screen.begin(16, 1);
+  screen.begin(16, 2);
   screen.clear();
+  pinMode(ScreenPWN, OUTPUT);
+  pinMode(ScreenBackLight, OUTPUT);
+  digitalWrite(ScreenBackLight, HIGH);
+  analogWrite(ScreenPWN, 150);
+  screen.setCursor(0, 0);
+  screen.print(introMessage1);
+  delay(1000);
+  screen.setCursor(0, 1);
+  screen.print(introMessage2);
+  delay(1000);
   for(int i = 0; i < BoardHeight / MatrixSize; i++){
     board.shutdown(i, false);
     board.setIntensity(i, 5);
     board.clearDisplay(i);
   }
-  getUserImput();
-  gameStartUp();
+  highScore = 0;
+  menuDisplay = true;
+  playSong = false;
+  twoPlayers = false;
+  previousMenuTime = millis();
+  menuPosition = true;
 }
 
 void loop(){
   currentTime = millis();
-  if (gameStart)
-    gameControls();
-  if (!gameStart && currentImage != IMAGES_LEN)
-    if (currentTime - previousImageTime > ImageDelay)
-      displayImage(0);
+  if(menuDisplay)
+    menu();
+  else{
+    if (gameStart)
+      gameControls();
+    if (!gameStart && currentImage != IMAGES_LEN)
+      if (currentTime - previousImageTime > ImageDelay)
+        displayImage(0);
+    if (currentImage == IMAGES_LEN)
+      menuDisplay = !menuDisplay;
+  }
   sounds();
+  
+  
 }
