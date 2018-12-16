@@ -46,4 +46,14 @@ In two player mode, your goal is to outlast you opponent. Challenge you friends 
     Displays the score on the LCD Display and compare it to the highScore.
 -	Two player mode:
     Displays witch player wins.
+    
+    
+    
+    
+    
+    
+## References
+	
+Code for active buzzer(including song): [here](https://www.arduino.cc/en/Tutorial/toneMelody). 
 
+Usefull tool for LED Matrix display: [here](https://xantorohara.github.io/led-matrix-editor/).
