@@ -38,6 +38,8 @@ In two player mode, your goal is to outlast you opponent. Challenge you friends 
 -	The pallets move with the joystick on one direction (up/down).
 -	During the game the boll’s speed increases and the pallets length decreases. 
 
+-	Game score is only available in one player mode. The score increases whenever the ball bounces on the oponents pallet.
+
 ### End of game:
 
 -	One player mode:
