@@ -97,7 +97,7 @@ int noteDurations[] = {
 
 #pragma region soundsFunctions
 
-void playSound(int note){
+void playSound(int note) {
   playNote = true;
   previousNoteTime = currentTime;
   noTone(PinBuzzer1);
@@ -114,15 +114,15 @@ void song() {
   currentNote++;
 }
 
-void sounds(){
+void sounds() {
   if (playNote)
-    if (currentTime - previousNoteTime > BounceSoundDuration){
+    if (currentTime - previousNoteTime > BounceSoundDuration) {
       playNote = false;
       noTone(PinBuzzer1);
     }
   if (playSong)
-    if (currentTime - previousSongNoteTime > songPause){
-      if (currentNote == SongLength){
+    if (currentTime - previousSongNoteTime > songPause) {
+      if (currentNote == SongLength) {
         playSong = false;
         currentNote = 0;
         noTone(PinBuzzer1);
@@ -136,7 +136,7 @@ void sounds(){
 
 #pragma region drawFunctions
 
-void displayImage(int matrixNo){
+void displayImage(int matrixNo) {
   previousImageTime = currentTime;
   const byte* image = IMAGES[currentImage++];
   for (int i = 0; i < 8; i++)
@@ -144,14 +144,14 @@ void displayImage(int matrixNo){
       board.setLed(matrixNo, i, j, bitRead(image[i], 7 - j)); 
 }
 
-void drawPalets(){
-  for (int i = 0; i < paletLength; i++){
+void drawPalets() {
+  for (int i = 0; i < paletLength; i++) {
     board.setLed((player1PaletY + i) / MatrixSize, player1PaletY + i, 0, HIGH);
     board.setLed((player1PaletY + i) / MatrixSize, player2PaletY + i, BoardWidth - 1, HIGH);
   }
 }
 
-void draw(){
+void draw() {
   for (int i = 0; i < BoardHeight / MatrixSize; i++)
     board.clearDisplay(0);
   board.setLed(ballY / MatrixSize, ballY, ballX, 1);
@@ -164,7 +164,7 @@ void draw(){
 
 #pragma region objectsMove
 
-void ballMove(){
+void ballMove() {
   if (ballDirectionX)
     ballX--;
   else
@@ -175,22 +175,22 @@ void ballMove(){
   else
     ballY++;
   //this code is for one player mode in order to keep playing with the PC
-  if (!twoPlayers){
+  if (!twoPlayers) {
     player2PaletY = ballY;
     if (player2PaletY > BoardHeight - paletLength)
     player2PaletY = BoardHeight - paletLength;
   }
   //end of one player mode palet move 
-  if (ballX == 1){
+  if (ballX == 1) {
     if (ballY < player1PaletY || ballY > player1PaletY + paletLength)
       gameOver();
-    else{
+    else {
       playSound(NOTE_E3);
       ballDirectionX = !ballDirectionX;
       countBounce++;
     }
   }
-  if (ballX == 6){
+  if (ballX == 6) {
     if (ballY < player2PaletY || ballY > player2PaletY + paletLength)
       gameOver();
     else{
@@ -204,9 +204,9 @@ void ballMove(){
     ballDirectionY = !ballDirectionY;
 }
 
-void score(){
+void score() {
   scoreCount++;
-  if (!twoPlayers){
+  if (!twoPlayers) {
     screen.clear();
     screen.setCursor(0, 0);
     screen.print(scoreString);
@@ -214,7 +214,7 @@ void score(){
   }
 }
 
-void paletMove(){
+void paletMove() {
   //player one palet move 
   int pl1Y = MaxAnalogRead - analogRead(Joy1Y); //just for inverting the y axes controlls
   if (pl1Y < PaletMaxSensibility)
@@ -227,7 +227,7 @@ void paletMove(){
     player1PaletY = 0;
 
   //player two palet move
-  if (twoPlayers){
+  if (twoPlayers) {
     int pl2Y = analogRead(Joy2Y);
     if (pl2Y < PaletMaxSensibility)
       player2PaletY--;
@@ -241,7 +241,7 @@ void paletMove(){
 }
 #pragma endregion
 
-void gameStartUp(){
+void gameStartUp() {
   scoreCount = 0;
   speedIndex = 0;
   paletLength = MaxPaletLength;
@@ -274,25 +274,25 @@ void gameStartUp(){
   previousPaletTime = previousGameTime;
 }
 
-void gameOver(){
+void gameOver() {
   gameStart = false;
   displayGameStats();
   song();
 }
 
-void displayGameStats(){
-  if (!stats){
+void displayGameStats() {
+  if (!stats) {
     stats = true;
     screen.clear();
     screen.setCursor(0, 0); 
-    if(twoPlayers){
+    if(twoPlayers) {
       if (ballX < (BoardWidth - 1) / 2) 
         screen.print(player2Win);
       else
         screen.print(player1Win);
     }
     else{
-      if (scoreCount > highScore){
+      if (scoreCount > highScore) {
         highScore = scoreCount;
         screen.print(newHighScore);
         screen.setCursor(0, 1);
@@ -313,8 +313,8 @@ void displayGameStats(){
   }
 }
 
-void dificulty(){
-  if (countBounce == MaxBounce){
+void dificulty() {
+  if (countBounce == MaxBounce) {
     countBounce = 0;
     if (speedIndex < MaxSpeedIndex)
       speedIndex++;
@@ -323,14 +323,14 @@ void dificulty(){
   }
 }
 
-void gameControls(){
-  if (currentTime - previousBallTime > BallDelay - speedIndex * SpeedFactor){
+void gameControls() {
+  if (currentTime - previousBallTime > BallDelay - speedIndex * SpeedFactor) {
     ballMove();
     dificulty();
     previousBallTime = currentTime;
     draw();
   }
-  if (currentTime - previousPaletTime > PaletDelay){
+  if (currentTime - previousPaletTime > PaletDelay) {
     paletMove();
     previousPaletTime = currentTime;
     draw();
@@ -339,16 +339,16 @@ void gameControls(){
 
 #pragma endregion
 
-void menu(){
-  if (currentTime - previousMenuTime > MenuDelay){
+void menu() {
+  if (currentTime - previousMenuTime > MenuDelay) {
     int valY = analogRead(Joy1Y);
-    if (valY > MenuMinSensibility || valY < MenuMaxSensibility){
+    if (valY > MenuMinSensibility || valY < MenuMaxSensibility) {
       menuPosition = !menuPosition;
       playSound(NOTE_CS7);
     }
     int valX = analogRead(Joy1X);
-    if (valX > MenuMinSensibility || valX < MenuMaxSensibility){
-        if (menuPosition){
+    if (valX > MenuMinSensibility || valX < MenuMaxSensibility) {
+        if (menuPosition) {
           menuDisplay = !menuDisplay;
           gameStartUp();
         }
@@ -359,13 +359,13 @@ void menu(){
     }
     //display menu items
     screen.clear();
-    if (menuPosition){
+    if (menuPosition) {
       screen.setCursor(0, 0);
       screen.print(menuCursor);
     }
     screen.setCursor(1, 0);
     screen.print(startGame);
-    if (!menuPosition){
+    if (!menuPosition) {
       screen.setCursor(0, 1);
       screen.print(menuCursor);
     }
@@ -378,7 +378,7 @@ void menu(){
   }
 }
 
-void setup(){
+void setup() {
   gameStart = false;
   screen.begin(16, 2);
   screen.clear();
@@ -392,7 +392,7 @@ void setup(){
   screen.setCursor(0, 1);
   screen.print(introMessage2);
   delay(1000);
-  for (int i = 0; i < BoardHeight / MatrixSize; i++){
+  for (int i = 0; i < BoardHeight / MatrixSize; i++) {
     board.shutdown(i, false);
     board.setIntensity(i, 5);
     board.clearDisplay(i);
@@ -405,7 +405,7 @@ void setup(){
   menuPosition = true;
 }
 
-void loop(){
+void loop() {
   currentTime = millis();
   if (menuDisplay)
     menu();
