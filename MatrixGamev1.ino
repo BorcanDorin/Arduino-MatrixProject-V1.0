@@ -30,6 +30,9 @@
 #define MenuDelay 250
 #define MenuMinSensibility 800
 #define MenuMaxSensibility 250
+#define PaletMinSensibility 600
+#define PaletMaxSensibility 400
+#define MaxAnalogRead 1023
 
 LedControl board = LedControl(8, 11, 10, 1); // pini buni
 LiquidCrystal screen(2, 3, 4, 5, 6, 7); // pini buni
@@ -213,10 +216,10 @@ void score(){
 
 void paletMove(){
   //player one palet move 
-  int pl1Y = analogRead(Joy1Y);
-  if (pl1Y < 400)
+  int pl1Y = MaxAnalogRead - analogRead(Joy1Y); //just for inverting the y axes controlls
+  if (pl1Y < PaletMaxSensibility)
     player1PaletY--;
-  if (pl1Y > 600)
+  if (pl1Y > PaletMinSensibility)
     player1PaletY++;
   if (player1PaletY > BoardHeight - paletLength)
     player1PaletY = BoardHeight - paletLength;
@@ -226,9 +229,9 @@ void paletMove(){
   //player two palet move
   if (twoPlayers){
     int pl2Y = analogRead(Joy2Y);
-    if (pl2Y < 400)
+    if (pl2Y < PaletMaxSensibility)
       player2PaletY--;
-    if (pl2Y > 600)
+    if (pl2Y > PaletMinSensibility)
       player2PaletY++;
     if (player2PaletY > BoardHeight - paletLength)
       player2PaletY = BoardHeight - paletLength;
