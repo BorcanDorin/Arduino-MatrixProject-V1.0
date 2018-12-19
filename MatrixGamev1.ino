@@ -21,13 +21,15 @@
 #define MaxBounce 12
 #define MaxSpeedIndex 5
 #define SpeedFactor 25
-#define ImageDelay 100
+#define ImageDelay 50
 #define GameDelay 250
 #define BallDelay 250
 #define PaletDelay 100
 #define BounceSoundDuration 125
 #define SongLength 8
 #define MenuDelay 250
+#define MenuMinSensibility 800
+#define MenuMaxSensibility 250
 
 LedControl board = LedControl(8, 11, 10, 1); // pini buni
 LiquidCrystal screen(2, 3, 4, 5, 6, 7); // pini buni
@@ -201,10 +203,12 @@ void ballMove(){
 
 void score(){
   scoreCount++;
-  screen.clear();
-  screen.setCursor(0, 0);
-  screen.print(scoreString);
-  screen.print(scoreCount);
+  if (!twoPlayers){
+    screen.clear();
+    screen.setCursor(0, 0);
+    screen.print(scoreString);
+    screen.print(scoreCount);
+  }
 }
 
 void paletMove(){
@@ -319,8 +323,7 @@ void dificulty(){
 void gameControls(){
   if (currentTime - previousBallTime > BallDelay - speedIndex * SpeedFactor){
     ballMove();
-    if(!twoPlayers)
-      dificulty();
+    dificulty();
     previousBallTime = currentTime;
     draw();
   }
@@ -336,12 +339,12 @@ void gameControls(){
 void menu(){
   if (currentTime - previousMenuTime > MenuDelay){
     int valY = analogRead(Joy1Y);
-    if (valY > 600 || valY < 400){
+    if (valY > MenuMinSensibility || valY < MenuMaxSensibility){
       menuPosition = !menuPosition;
       playSound(NOTE_CS7);
     }
     int valX = analogRead(Joy1X);
-    if (valX > 600 || valX < 400){
+    if (valX > MenuMinSensibility || valX < MenuMaxSensibility){
         if (menuPosition){
           menuDisplay = !menuDisplay;
           gameStartUp();
