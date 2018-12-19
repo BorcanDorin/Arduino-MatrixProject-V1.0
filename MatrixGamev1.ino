@@ -149,7 +149,7 @@ void drawPalets(){
 }
 
 void draw(){
-  for(int i = 0; i < BoardHeight / MatrixSize; i++)
+  for (int i = 0; i < BoardHeight / MatrixSize; i++)
     board.clearDisplay(0);
   board.setLed(ballY / MatrixSize, ballY, ballX, 1);
   drawPalets();
@@ -389,7 +389,7 @@ void setup(){
   screen.setCursor(0, 1);
   screen.print(introMessage2);
   delay(1000);
-  for(int i = 0; i < BoardHeight / MatrixSize; i++){
+  for (int i = 0; i < BoardHeight / MatrixSize; i++){
     board.shutdown(i, false);
     board.setIntensity(i, 5);
     board.clearDisplay(i);
@@ -404,7 +404,7 @@ void setup(){
 
 void loop(){
   currentTime = millis();
-  if(menuDisplay)
+  if (menuDisplay)
     menu();
   else{
     if (gameStart)
